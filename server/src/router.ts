@@ -7,7 +7,7 @@ let pets: Pet[] = [];
 const Pet = z.object({
   id: z.number(),
   name: z.string(),
-  type: z.string(),
+  type: z.string().optional(),
 });
 
 const Pets = z.array(Pet);
