@@ -1,35 +1,42 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
+import { httpBatchLink } from "@trpc/client";
+import type { TRPCRouter } from "../../server/src/router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Create from "./pets/Create";
+import Detail from "./pets/Detail";
+import List from "./pets/List";
+import { createTRPCReact } from "@trpc/react-query";
+
+const BACKEND_URL = "http://localhost:8080/pet";
+export const trpc = createTRPCReact<TRPCRouter>();
 
 function App() {
-  const [count, setCount] = useState(0)
-
+  const [queryClient] = useState(() => new QueryClient());
+  const [trpcClient] = useState(() =>
+    trpc.createClient({
+      links: [
+        httpBatchLink({
+          url: BACKEND_URL,
+        }),
+      ],
+    })
+  );
+  const [detailId, setDetailId] = useState(-1);
+  const setDetail = (id: number) => {
+    setDetailId(id);
+  };
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <div className="App">
+          <Create />
+          <List setDetail={setDetail} />
+          {detailId > 0 ? <Detail id={detailId} /> : null}
+        </div>
+      </QueryClientProvider>
+    </trpc.Provider>
+  );
 }
 
-export default App
+export default App;
